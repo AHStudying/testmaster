@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spelling UIL Practice</title>
+    <title>Word Contest</title>
     <style>
         body {
             background-color: #333;
@@ -27,197 +27,71 @@
         h1 {
             font-size: 24px;
         }
-        h2 {
-            font-size: 20px;
-        }
-        label {
-            font-size: 16px;
-        }
-        input[type="text"] {
-            font-size: 16px;
-            width: 100%;
-            padding: 5px;
-        }
-        button {
-            font-size: 16px;
-            background-color: #007BFF;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            margin-top: 10px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
         p {
             font-size: 16px;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            font-size: 16px;
-            margin: 5px 0;
-        }
-        .credits {
-            position: absolute;
-            bottom: 10px;
-            text-align: center;
-            font-size: 14px;
-        }
-        .tip {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #888;
-        }
-        .accented-keyboard {
-            position: absolute;
-            bottom: 10px;
-            left: 10px;
-            background-color: #777;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: move;
-        }
-        .accented-keyboard button {
-            font-size: 16px;
-            margin: 0 5px;
-            padding: 5px 10px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Spelling Practice</h1>
-        <form method="POST" action="{{ url_for('contest') }}">
-            <h2>Word {{ current_word_idx + 1 }}/{{ total_words }}</h2>
-            <label for="user_input">Type the word:</label>
-            <input type="text" name="user_input" id="user_input" required autocomplete="off">
-            <br>
-            <button type="button" onclick="pronounce_word();">Pronounce</button>
-            <audio id="audio-player" controls style="display: none;">
-                <source src="{{ audio_url }}" type="audio/mpeg">
-                Your browser does not support the audio element.
-            </audio>
-            <button type="submit">Submit</button>
-        </form>
-        <div>
-            <p>Score: {{ current_word_idx }}/{{ total_words }}</p>
-        </div>
-        <div>
-            <h2>Feedback:</h2>
-            <ul>
-                {% if feedback %}
-                    <p>{{ feedback }}</p>
-                {% endif %}
-            </ul>
-        </div>
+        <h1>Word Contest</h1>
+        <p>Processing your words...</p>
+        <audio id="audio-player" controls style="display: none;">
+            <source src="" type="audio/mpeg">
+            Your browser does not support the audio element.
+        </audio>
     </div>
-    <div class="tip">
-        <p><strong>Tip:</strong> Hold Shift and press Enter in the text box to pronounce the word.</p>
-        <p><strong>FYI:</strong> If multiple people try to use this service at once, it will break.<br>For a custom instance, please head to the <a href="https://github.com/AHStudying/Flask-Spelling-UIL/">repo</a> and follow the FREE SETUP INSTRUCTIONS.</p>
-    </div>
-    <div class="accented-keyboard" draggable="true" id="accentedKeyboard">
-        <button onclick="insertAccent('á')">á</button>
-        <button onclick="insertAccent('â')">â</button>
-        <button onclick="insertAccent('é')">é</button>
-        <button onclick="insertAccent('è')">è</button>
-        <button onclick="insertAccent('ê')">ê</button>
-        <button onclick="insertAccent('í')">í</button>
-        <button onclick="insertAccent('î')">î</button>
-        <button onclick="insertAccent('ó')">ó</button>
-        <button onclick="insertAccent('ô')">ô</button>
-        <button onclick="insertAccent('ú')">ú</button>
-        <button onclick="insertAccent('ü')">ü</button>
-        <button onclick="insertAccent('ñ')">ñ</button>
-    </div>
-    <div class="credits">
-        <p>Credits to <a href="https://github.com/Calc-oholic/">Calc-oholic</a></p>
-    </div>
+
     <script>
-        function pronounce_word() {
-            var audio = document.getElementById('audio-player');
-            var audioUrl = "/pronounce?" + new Date().getTime(); // Append a timestamp to the URL
+        var words = {{ words | tojson }};
+
+        var currentWordIndex = 0;
+        var audio = document.getElementById('audio-player');
+        
+        function playWord(word) {
+            var audioUrl = "/pronounce?word=" + encodeURIComponent(word) + "&timestamp=" + new Date().getTime();
             audio.src = audioUrl;
             audio.load();
             audio.play();
         }
 
-        function alt_pronunciation() {
-            fetch('/alt_pronunciation').then(response => response.text()).then(data => console.log(data));
+        function playDefinition(word) {
+            fetch("/definition?word=" + encodeURIComponent(word))
+                .then(response => response.text())
+                .then(data => {
+                    var audioUrl = "/pronounce?definition=" + encodeURIComponent(data) + "&timestamp=" + new Date().getTime();
+                    audio.src = audioUrl;
+                    audio.load();
+                    audio.play();
+                });
         }
 
-        window.addEventListener('load', function() {
-            document.getElementById('user_input').focus();
-        });
-
-        document.getElementById('user_input').addEventListener('keydown', function (e) {
-            if (e.key === 'Enter' && e.shiftKey) {
-                pronounce_word();
-            }
-        });
-
-        function insertAccent(accent) {
-            var inputBox = document.getElementById('user_input');
-            var startPos = inputBox.selectionStart;
-            var endPos = inputBox.selectionEnd;
-            var textBefore = inputBox.value.substring(0, startPos);
-            var textAfter = inputBox.value.substring(endPos, inputBox.value.length);
-            inputBox.value = textBefore + accent + textAfter;
-            inputBox.setSelectionRange(startPos + accent.length, startPos + accent.length);
-            inputBox.focus();
+        function pronounceWordAndDefinitions(word) {
+            playWord(word);
+            setTimeout(function() {
+                playDefinition(word);
+            }, 3000); // Wait for 3 seconds before playing definitions
+            setTimeout(function() {
+                playWord(word);
+            }, 6000); // Wait for 6 seconds before repeating the word
         }
 
-        dragElement(document.getElementById("accentedKeyboard"));
-
-        function dragElement(elmnt) {
-            var pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
-            if (document.getElementById(elmnt.id)) {
-                elmnt.onmousedown = dragMouseDown;
+        function processWords() {
+            if (currentWordIndex < words.length) {
+                pronounceWordAndDefinitions(words[currentWordIndex]);
+                setTimeout(function() {
+                    currentWordIndex++;
+                    processWords();
+                }, 9000); // Wait for 9 seconds before moving to the next word
             } else {
-                elmnt.onmousedown = dragMouseDown;
-            }
-
-            function dragMouseDown(e) {
-                e.preventDefault();
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-                document.onmouseup = closeDragElement;
-                document.onmousemove = elementDrag;
-            }
-
-            function elementDrag(e) {
-                e.preventDefault();
-                pos1 = pos3 - e.clientX;
-                pos2 = pos4 - e.clientY;
-                pos3 = e.clientX;
-                pos4 = e.clientY;
-
-                var newTop = elmnt.offsetTop - pos2;
-                var newLeft = elmnt.offsetLeft - pos1;
-                var newBottom = newTop + elmnt.clientHeight;
-            
-                // Ensure the element stays within the viewport
-                if (newTop >= 0 && newBottom <= window.innerHeight) {
-                    elmnt.style.top = newTop + "px";
-                    elmnt.style.bottom = "auto";  // Reset 'bottom' to 'auto' when moving
-                }
-
-                // Ensure the element stays within the viewport horizontally
-                if (newLeft >= 0 && newLeft + elmnt.clientWidth <= window.innerWidth) {
-                    elmnt.style.left = newLeft + "px";
-                }
-            }
-
-
-            function closeDragElement() {
-                document.onmouseup = null;
-                document.onmousemove = null;
+                // Redirect back to the index page after all words are processed
+                window.location.href = "/";
             }
         }
+
+        window.onload = function() {
+            processWords();
+        };
     </script>
 </body>
 </html>
