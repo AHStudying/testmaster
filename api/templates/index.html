@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Spelling UIL</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.3/nouislider.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Pronunciation Test</title>
     <style>
         body {
             background-color: #333;
@@ -26,11 +27,16 @@
         h1 {
             font-size: 24px;
         }
-        h2 {
-            font-size: 20px;
-        }
         label {
             font-size: 16px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin-top: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+            resize: none;
         }
         button {
             font-size: 16px;
@@ -48,104 +54,17 @@
         p {
             font-size: 16px;
         }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            font-size: 16px;
-            margin: 5px 0;
-        }
-        .dark-mode {
-            background-color: #444444;
-        }
-        .range-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            margin-top: 20px;
-        }
-        .range-slider {
-            width: 100%;
-            margin: 20px 0;
-            position: relative;
-        }
-        .credits {
-            position: absolute;
-            bottom: 10px;
-            text-align: center;
-            font-size: 14px;
-        }
-        /* Improved select box styles */
-        select {
-            font-size: 16px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            width: 100%;
-            max-width: 100%;
-            box-sizing: border-box;
-            margin-bottom: 10px;
-            background-color: #fff; /* Ensure dropdown has white background */
-            color: #333; /* Ensure text color is readable */
-            appearance: none; /* Remove default dropdown arrow */
-        }
-        select:hover,
-        select:focus {
-            outline: none;
-            border-color: #007BFF; /* Highlight on hover/focus */
-        }
     </style>
 </head>
 <body>
-    <div class="container dark-mode">
-        <h1>Spelling Practice</h1>
-        <div class="range-container">
-            <h2>Choose the range of words to study:</h2>
-            <div class="range-slider" id="range-slider"></div>
-        </div>
-        <form method="POST">
-            <label for="filename">Select File:</label>
-            <select name="filename" id="filename" required>
-                {% for file in file_names %}
-                    <option value="{{ file }}">{{ file }}</option>
-                {% endfor %}
-            </select>
+    <div class="container">
+        <h1>Word Pronunciation Test</h1>
+        <form method="POST" action="{{ url_for('contest') }}">
+            <label for="words">Enter your list of words (one per line):</label>
+            <textarea id="words" name="words" required></textarea>
             <br>
-            <label for="start_index">Start Index:</label>
-            <input type="number" name="start_index" id="start_index" required>
-            <br>
-            <label for="end_index">End Index:</label>
-            <input type="number" name="end_index" id="end_index" required>
-            <br>
-            <button type="submit">Start Contest</button>
+            <button type="submit">Begin Test</button>
         </form>
     </div>
-    <div class="credits">
-        <p>Credits to <a href="https://github.com/Calc-oholic/">Calc-oholic</a></p>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/noUiSlider/14.6.3/nouislider.min.js"></script>
-    <script>
-        const rangeSlider = document.getElementById('range-slider');
-        const startRange = document.getElementById('start_index');
-        const endRange = document.getElementById('end_index');
-
-        const sliderRange = {
-            min: 1,
-            max: 1500,
-        };
-
-        noUiSlider.create(rangeSlider, {
-            start: [375, 1125],
-            connect: true,
-            range: sliderRange,
-        });
-
-        rangeSlider.noUiSlider.on('update', function (values) {
-            startRange.value = Math.round(values[0]);
-            endRange.value = Math.round(values[1]);
-        });
-    </script>
 </body>
 </html>
