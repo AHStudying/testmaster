@@ -20,21 +20,18 @@ def index():
 @app.route('/contest', methods=['POST'])
 def contest():
     words = request.form.getlist('words[]')
-    for word in words:
-        pronounce_word(word)
-        pronounce_definitions(word)
-        pronounce_word(word)
-        time.sleep(3)  # Wait for 3 seconds between each word
+    return render_template('contest.html', words=words)
 
-    return redirect(url_for('index'))
-
-def pronounce_word(word):
+@app.route('/pronounce', methods=['GET'])
+def pronounce():
+    word = request.args.get('word')
     tts = gTTS(text=word, lang='en')
-    audio_path = f'static/audio/{word}.mp3'
-    tts.save(audio_path)
-    play_audio(audio_path)
+    audio_data = tts.get_audio_data()
+    return audio_data, 200, {'Content-Type': 'audio/mpeg'}
 
-def pronounce_definitions(word):
+@app.route('/definition', methods=['GET'])
+def definition():
+    word = request.args.get('word')
     url = f'https://www.ahdictionary.com/word/search.html?q={word}'
     response = requests.get(url)
     soup = BeautifulSoup(response.content, 'html.parser')
@@ -42,14 +39,10 @@ def pronounce_definitions(word):
     for item in soup.find_all('div', class_='ds-list'):
         definitions.append(item.text.strip())
     
-    for definition in definitions:
-        tts = gTTS(text=definition, lang='en')
-        audio_path = f'static/audio/{word}_definition.mp3'
-        tts.save(audio_path)
-        play_audio(audio_path)
-
-def play_audio(audio_path):
-    os.system(f'afplay {audio_path}')  # Mac OS specific, replace with appropriate command for your OS
+    combined_definition = '\n'.join(definitions)
+    tts = gTTS(text=combined_definition, lang='en')
+    audio_data = tts.get_audio_data()
+    return audio_data, 200, {'Content-Type': 'audio/mpeg'}
 
 if __name__ == '__main__':
     app.run(debug=True)
